@@ -1,11 +1,493 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dale al link Sarahi</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dale click al link Sarahi</title>
 
-    <link rel="stylesheet" href="styles.css">
+<style>
+/* =========================================================
+   RESET Y ESTILOS GLOBALES
+========================================================= */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    user-select: none;
+}
+
+#scene {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+}
+
+/* =========================================================
+   OVERLAY DE INICIO
+========================================================= */
+#startOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    cursor: pointer;
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+
+#startOverlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.start-prompt {
+    font-family: 'Courier New', monospace;
+    font-size: clamp(0.9rem, 2vw, 1.3rem);
+    letter-spacing: 0.4em;
+    color: #00a2ff;
+    text-shadow: 0 0 15px rgba(0, 162, 255, 0.8), 0 0 30px rgba(0, 162, 255, 0.4);
+    animation: pulsePrompt 1.8s infinite ease-in-out;
+}
+
+@keyframes pulsePrompt {
+    0%, 100% { opacity: 0.3; transform: scale(0.98); }
+    50% { opacity: 1; transform: scale(1.02); }
+}
+
+/* =========================================================
+   ESCENA DEL RELOJ Y MENSAJES
+========================================================= */
+#clockScene {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(
+        circle at 50% 40%,
+        #0a1836 0%,
+        #030a1a 50%,
+        #010308 100%
+    );
+    opacity: 1;
+}
+
+/* Contenedor del reloj con transición fluida */
+.clock-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    transform: translateY(0) scale(1);
+    transition: transform 1.6s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+    z-index: 30;
+}
+
+/* Estado cuando el reloj sube y se hace más pequeño */
+#clockScene.minimized .clock-container {
+    transform: translateY(calc(-40vh + 40px)) scale(0.55);
+}
+
+/* Estado final cuando el reloj vuelve al centro tras el video o por cookie */
+#clockScene.final-center .clock-container {
+    transform: translateY(0) scale(1.08);
+}
+
+/* =========================================================
+   TEXTOS SUPERIOR E INFERIOR (CUMPLEAÑOS)
+========================================================= */
+.top-title, .bottom-title {
+    font-family: 'Courier New', monospace;
+    color: #00a2ff;
+    text-shadow: 0 0 15px rgba(0, 162, 255, 0.8), 0 0 30px rgba(0, 162, 255, 0.4);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 1.2s ease, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.top-title {
+    font-size: clamp(1.2rem, 3.5vw, 2.2rem);
+    letter-spacing: 0.5em;
+    font-weight: 700;
+}
+
+.bottom-title {
+    font-size: clamp(1rem, 3vw, 1.8rem);
+    letter-spacing: 0.3em;
+}
+
+/* Visibilidad de títulos finales */
+#clockScene.final-center .top-title,
+#clockScene.final-center .bottom-title {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* =========================================================
+   RELOJ Y DÍGITOS FLIP
+========================================================= */
+.clock {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(6px, 1.8vw, 24px);
+    font-family: 'Courier New', monospace;
+    font-size: clamp(3rem, 13vw, 9.5rem);
+    font-weight: 700;
+    line-height: 1;
+}
+
+.time-group {
+    display: flex;
+    gap: clamp(3px, .4vw, 8px);
+}
+
+.flip-digit {
+    position: relative;
+    width: .62em;
+    height: 1em;
+    perspective: 1000px;
+}
+
+.half {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    overflow: hidden;
+    background: linear-gradient(180deg, #0f2242 0%, #061021 100%);
+    border: 1px solid rgba(0, 162, 255, 0.35);
+    box-shadow: inset 0 0 10px rgba(0, 162, 255, 0.15), 0 0 15px rgba(0, 0, 0, 0.8);
+    z-index: 1;
+}
+
+.half span {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1em;
+    display: block;
+    text-align: center;
+    line-height: 1em;
+    color: #e6f4ff;
+    text-shadow: 0 0 12px rgba(0, 162, 255, 0.6);
+}
+
+.top-static {
+    top: 0;
+    border-radius: 6px 6px 2px 2px;
+}
+
+.top-static span {
+    top: 0;
+}
+
+.bottom-static {
+    bottom: 0;
+    border-radius: 2px 2px 6px 6px;
+}
+
+.bottom-static span {
+    top: -100%;
+}
+
+.flip-digit::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 2px;
+    transform: translateY(-1px);
+    background: #00a2ff;
+    box-shadow: 0 0 8px #00a2ff, 0 0 15px #00a2ff;
+    z-index: 20;
+}
+
+.flip-panel {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    overflow: hidden;
+    z-index: 10;
+    background: linear-gradient(180deg, #12284d 0%, #071328 100%);
+    border: 1px solid rgba(0, 162, 255, 0.5);
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
+}
+
+.flip-panel span {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1em;
+    display: block;
+    text-align: center;
+    line-height: 1em;
+    color: #e6f4ff;
+    text-shadow: 0 0 12px rgba(0, 162, 255, 0.6);
+}
+
+.flip-panel.top {
+    top: 0;
+    transform-origin: bottom center;
+    border-radius: 6px 6px 2px 2px;
+    transform: rotateX(0deg);
+}
+
+.flip-panel.top span {
+    top: 0;
+}
+
+.flip-panel.bottom {
+    bottom: 0;
+    transform-origin: top center;
+    border-radius: 2px 2px 6px 6px;
+    transform: rotateX(90deg);
+}
+
+.flip-panel.bottom span {
+    top: -100%;
+}
+
+.flip-digit.flip .flip-panel.top {
+    animation: flipTop var(--duration) cubic-bezier(.37,.01,.63,1) forwards;
+}
+
+@keyframes flipTop {
+    0% { transform: rotateX(0deg); }
+    100% { transform: rotateX(-90deg); }
+}
+
+.flip-digit.flip .flip-panel.bottom {
+    animation: flipBottom var(--duration) cubic-bezier(.37,.01,.63,1) forwards;
+    animation-delay: calc(var(--duration) * .45);
+}
+
+@keyframes flipBottom {
+    0% { transform: rotateX(90deg); }
+    100% { transform: rotateX(0deg); }
+}
+
+.separator {
+    color: #00a2ff;
+    opacity: 0.8;
+    text-shadow: 0 0 10px #00a2ff, 0 0 20px rgba(0, 162, 255, 0.5);
+    transition: opacity .1s ease, transform .1s ease;
+}
+
+.separator.flash {
+    opacity: 1;
+    transform: scale(1.1);
+    color: #ffffff;
+    text-shadow: 0 0 15px #ffffff, 0 0 25px #00a2ff;
+}
+
+#status {
+    min-height: 1em;
+    font-family: 'Courier New', monospace;
+    font-size: clamp(.6rem, 1.4vw, .85rem);
+    letter-spacing: .4em;
+    color: #33ffaa;
+    text-shadow: 0 0 10px rgba(51, 255, 170, 0.6);
+    opacity: 0.85;
+    text-align: center;
+}
+
+/* =========================================================
+   CONTENEDOR DE TEXTOS CINEMÁTICOS Y PREVIO AL VIDEO
+========================================================= */
+#contentContainer {
+    position: absolute;
+    top: 52%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 800px;
+    text-align: center;
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.sequence-text {
+    font-family: 'Courier New', monospace;
+    font-size: clamp(1.1rem, 3.2vw, 2.2rem);
+    letter-spacing: 0.15em;
+    color: #ffffff;
+    text-shadow: 0 0 12px rgba(0, 162, 255, 0.7), 0 0 25px rgba(0, 162, 255, 0.4);
+    opacity: 0;
+    transform: translateY(15px) scale(0.96);
+    transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sequence-text.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* =========================================================
+   MENSAJE DE ADVERTENCIA PREVIO AL VIDEO
+========================================================= */
+#videoPromptContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+}
+
+#videoPromptContainer.visible {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+.prompt-text {
+    font-family: 'Courier New', monospace;
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
+    letter-spacing: 0.12em;
+    color: #00a2ff;
+    text-shadow: 0 0 12px rgba(0, 162, 255, 0.7);
+    line-height: 1.4;
+    max-width: 500px;
+}
+
+.play-button {
+    padding: 12px 32px;
+    background: transparent;
+    border: 1px solid #00a2ff;
+    color: #ffffff;
+    font-family: 'Courier New', monospace;
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    letter-spacing: 0.2em;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(0, 162, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.play-button:hover {
+    background: rgba(0, 162, 255, 0.2);
+    box-shadow: 0 0 25px rgba(0, 162, 255, 0.6);
+    transform: scale(1.05);
+}
+
+/* =========================================================
+   CONTENEDOR DEL VIDEO VERTICAL (9:16)
+========================================================= */
+#videoWrapper {
+    height: min(60vh, 450px);
+    aspect-ratio: 9 / 16;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 162, 255, 0.4);
+    box-shadow: 0 0 30px rgba(0, 162, 255, 0.3), 0 10px 40px rgba(0, 0, 0, 0.9);
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity 1.2s ease, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    display: none;
+}
+
+#videoWrapper.show {
+    display: block;
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+#videoWrapper.hide {
+    opacity: 0;
+    transform: scale(0.85);
+    pointer-events: none;
+}
+
+#video {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+/* =========================================================
+   CAPA Y STICKERS/GIFS ALEATORIOS
+========================================================= */
+#gifCanvas {
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+}
+
+#gifCanvas.visible {
+    opacity: 1;
+}
+
+.gif-item {
+    position: absolute;
+    max-width: clamp(70px, 14vw, 140px);
+    max-height: clamp(70px, 14vw, 140px);
+    object-fit: contain;
+    animation: floatGif 3s infinite ease-in-out alternate;
+}
+
+@keyframes floatGif {
+    0% { transform: translateY(0px) rotate(-4deg); }
+    100% { transform: translateY(-12px) rotate(4deg); }
+}
+
+.final-pulse {
+    animation: finalPulse .6s ease;
+}
+
+@keyframes finalPulse {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.06); }
+    100% { transform: scale(1); }
+}
+
+@media(max-width:600px) {
+    .clock {
+        font-size: clamp(2.2rem, 14vw, 5.5rem);
+        gap: 4px;
+    }
+    .time-group {
+        gap: 2px;
+    }
+    #clockScene.minimized .clock-container {
+        transform: translateY(calc(-38vh + 20px)) scale(0.65);
+    }
+}
+</style>
 </head>
 
 <body>
@@ -19,135 +501,603 @@
 
     <!-- ESCENA DEL RELOJ, TEXTOS Y VIDEO CENTRAL -->
     <section id="clockScene">
-
+        
         <div class="clock-container">
-
             <!-- TÍTULO SUPERIOR PARA FINAL -->
             <div class="top-title">FALTAN</div>
 
             <div class="clock">
-
                 <!-- HORAS -->
                 <div class="time-group">
-
                     <div class="flip-digit" data-value="2">
                         <div class="half top-static"><span>2</span></div>
                         <div class="half bottom-static"><span>2</span></div>
                         <div class="flip-panel top"><span>2</span></div>
                         <div class="flip-panel bottom"><span>2</span></div>
                     </div>
-
                     <div class="flip-digit" data-value="4">
                         <div class="half top-static"><span>4</span></div>
                         <div class="half bottom-static"><span>4</span></div>
                         <div class="flip-panel top"><span>4</span></div>
                         <div class="flip-panel bottom"><span>4</span></div>
                     </div>
-
                 </div>
 
                 <div class="separator">:</div>
 
                 <!-- MINUTOS -->
                 <div class="time-group">
-
                     <div class="flip-digit" data-value="0">
                         <div class="half top-static"><span>0</span></div>
                         <div class="half bottom-static"><span>0</span></div>
                         <div class="flip-panel top"><span>0</span></div>
                         <div class="flip-panel bottom"><span>0</span></div>
                     </div>
-
                     <div class="flip-digit" data-value="0">
                         <div class="half top-static"><span>0</span></div>
                         <div class="half bottom-static"><span>0</span></div>
                         <div class="flip-panel top"><span>0</span></div>
                         <div class="flip-panel bottom"><span>0</span></div>
                     </div>
-
                 </div>
 
                 <div class="separator">:</div>
 
                 <!-- SEGUNDOS -->
                 <div class="time-group">
-
                     <div class="flip-digit" data-value="0">
                         <div class="half top-static"><span>0</span></div>
                         <div class="half bottom-static"><span>0</span></div>
                         <div class="flip-panel top"><span>0</span></div>
                         <div class="flip-panel bottom"><span>0</span></div>
                     </div>
-
                     <div class="flip-digit" data-value="0">
                         <div class="half top-static"><span>0</span></div>
                         <div class="half bottom-static"><span>0</span></div>
                         <div class="flip-panel top"><span>0</span></div>
                         <div class="flip-panel bottom"><span>0</span></div>
                     </div>
-
                 </div>
-
             </div>
 
             <div id="status">SINCRONIZANDO...</div>
 
             <!-- TÍTULO INFERIOR PARA FINAL -->
             <div class="bottom-title">PARA TU CUMPLE</div>
-
         </div>
 
-        <!-- CONTENEDOR CENTRAL -->
+        <!-- CONTENEDOR CENTRAL PARA TEXTOS, ADVERTENCIA Y VIDEO VERTICAL -->
         <div id="contentContainer">
-
             <div id="sequenceText" class="sequence-text"></div>
-
+            
             <!-- MENSAJE Y BOTÓN PREVIO AL VIDEO -->
             <div id="videoPromptContainer">
-
-                <div class="prompt-text">
-                    es un video, usa audifonos o lo q se te antoje alv
-                </div>
-
-                <button id="startVideoBtn" class="play-button">
-                    VER VIDEO ▶
-                </button>
-
+                <div class="prompt-text">es un video, usa audifonos o lo q se te antoje alv</div>
+                <button id="startVideoBtn" class="play-button">VER VIDEO ▶</button>
             </div>
 
-            <!-- VIDEO -->
             <div id="videoWrapper">
-
-                <video
-                    id="video"
-                    src="media/ale.mp4"
-                    controls
-                    playsinline
-                    preload="auto">
-                </video>
-
+                <!-- Video vertical con controles interactivos -->
+                <video id="video" src="media/ale.mp4" controls playsinline preload="auto"></video>
             </div>
-
         </div>
 
-        <!-- GIFS / STICKERS -->
+        <!-- CAPA PARA GIFS/STICKERS FLOTANTES ALEATORIOS -->
         <div id="gifCanvas">
-
-    
-            <img src="media/giphy.gif" class="gif-item" alt="gif">
+            
+             <img src="media/giphy.gif" class="gif-item" alt="gif">
             <img src="media/giphy (1).gif" class="gif-item" alt="gif">
             <img src="media/giphy (2).gif" class="gif-item" alt="gif">
             <img src="media/giphy (3).gif" class="gif-item" alt="gif">
             <img src="media/giphy (4).gif" class="gif-item" alt="gif">
             
 
+ 
         </div>
 
     </section>
 
 </div>
 
-<script src="script.js"></script>
+<script>
+/* =========================================================
+   1. MANEJO ROBUSTO DE COOKIES
+========================================================= */
+function setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+        let date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    // Usamos Lax para compatibilidad total con servidores locales y navegadores
+    document.cookie = name + "=" + encodeURIComponent(value) + expires + "; path=/; SameSite=Lax";
+}
+
+function getCookie(name) {
+    let nameEQ = name + "=";
+    let ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+    }
+    return null;
+}
+
+const HAS_SEEN_VIDEO = getCookie("video_visto") === "true";
+
+/* =========================================================
+   2. SINTETIZADOR WEB AUDIO API (SONIDO TIC-TAC)
+========================================================= */
+let audioCtx = null;
+
+function initAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
+}
+
+let isTic = true;
+let cachedNoiseBuffer = null;
+
+function createNoiseBuffer() {
+    if (!audioCtx) return null;
+    const bufferSize = audioCtx.sampleRate * 0.03;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+    }
+    return buffer;
+}
+
+function tick(intensity = 1) {
+    if (!audioCtx || audioCtx.state === "suspended") return;
+    const now = audioCtx.currentTime;
+
+    if (!cachedNoiseBuffer) {
+        cachedNoiseBuffer = createNoiseBuffer();
+    }
+
+    const isTicSound = isTic;
+    isTic = !isTic;
+
+    const osc = audioCtx.createOscillator();
+    const oscGain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(isTicSound ? 220 : 170, now);
+    osc.frequency.exponentialRampToValueAtTime(30, now + 0.025);
+
+    oscGain.gain.setValueAtTime(0.2 * intensity, now);
+    oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+
+    osc.connect(oscGain);
+    oscGain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.03);
+
+    if (cachedNoiseBuffer) {
+        const noiseSource = audioCtx.createBufferSource();
+        noiseSource.buffer = cachedNoiseBuffer;
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.setValueAtTime(isTicSound ? 1400 : 1000, now);
+        filter.Q.setValueAtTime(3.5, now);
+
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.setValueAtTime(0.1 * intensity, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+
+        noiseSource.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(audioCtx.destination);
+
+        noiseSource.start(now);
+        noiseSource.stop(now + 0.025);
+    }
+}
+
+function finalTick() {
+    if (!audioCtx || audioCtx.state === "suspended") return;
+    const now = audioCtx.currentTime;
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(110, now);
+    osc.frequency.exponentialRampToValueAtTime(25, now + 0.6);
+
+    gain.gain.setValueAtTime(0.6, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.65);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.65);
+}
+
+/* =========================================================
+   3. LÓGICA Y SINCRONIZACIÓN DEL RELOJ
+========================================================= */
+const DEBUG = false;
+const DEBUG_REMAINING = 20;
+const START_TIME = 24 * 60 * 60;
+const INTRO_DURATION = 2.5;
+
+const clockScene = document.getElementById("clockScene");
+const videoPromptContainer = document.getElementById("videoPromptContainer");
+const startVideoBtn = document.getElementById("startVideoBtn");
+const videoWrapper = document.getElementById("videoWrapper");
+const video = document.getElementById("video");
+const status = document.getElementById("status");
+const sequenceTextEl = document.getElementById("sequenceText");
+const gifCanvas = document.getElementById("gifCanvas");
+
+const digits = [...document.querySelectorAll(".flip-digit")];
+const separators = [...document.querySelectorAll(".separator")];
+
+let state = "READY";
+let running = false;
+let targetDate = null;
+let virtualTime = START_TIME;
+let lastFrame = 0;
+let raf = null;
+let lastSecond = -1;
+let debugStart = 0;
+let animStartTime = 0;
+let minimizeTimeout = null;
+
+// Primera secuencia de frases
+const TEXT_MESSAGES_1 = [
+    { text: "Ola sorra", duration: 2800 },
+    { text: "Mira esto lo tenía como frist gif", duration: 3200 },
+    { text: "pero creo que ahora es un previo", duration: 3200 },
+    { text: "anyways", duration: 2200 },
+    { text: "mira...", duration: 2500 }
+];
+
+// Segunda secuencia de frases (POST-VIDEO)
+const TEXT_MESSAGES_2 = [
+    { text: "ojala k te hayga gustado.", duration: 3000 },
+    { text: "ahi nomas pa q sea otra cosilla", duration: 3200 },
+    { text: "listo eso es todo.", duration: 2500 },
+    { text: "maybe este dormido cuando lo veas xdddd (si es que lo vez)", duration: 4000 }
+];
+
+function getTargetDate() {
+    const now = new Date();
+    let year = now.getFullYear();
+    let target = new Date(year, 7, 19, 0, 0, 0, 0);
+
+    if (target.getTime() <= now.getTime()) {
+        target = new Date(year + 1, 7, 19, 0, 0, 0, 0);
+    }
+    return target;
+}
+
+function getRemaining() {
+    if (DEBUG) {
+        return Math.max(0, DEBUG_REMAINING - (performance.now() - debugStart) / 1000);
+    }
+    return Math.max(0, (targetDate.getTime() - Date.now()) / 1000);
+}
+
+function formatTime(seconds) {
+    seconds = Math.max(0, Math.floor(seconds));
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    return (
+        String(hours).padStart(2, "0") + ":" +
+        String(minutes).padStart(2, "0") + ":" +
+        String(secs).padStart(2, "0")
+    );
+}
+
+function getDigits(seconds) {
+    const text = formatTime(seconds);
+    return [text[0], text[1], text[3], text[4], text[6], text[7]];
+}
+
+function flipDigit(element, oldValue, newValue, duration) {
+    if (oldValue === newValue) return;
+
+    const topPanel = element.querySelector(".flip-panel.top");
+    const bottomPanel = element.querySelector(".flip-panel.bottom");
+    const topStatic = element.querySelector(".top-static span");
+    const bottomStatic = element.querySelector(".bottom-static span");
+
+    topStatic.textContent = oldValue;
+    bottomStatic.textContent = oldValue;
+    topPanel.querySelector("span").textContent = oldValue;
+    bottomPanel.querySelector("span").textContent = newValue;
+
+    element.classList.remove("flip");
+    topPanel.style.animation = "none";
+    bottomPanel.style.animation = "none";
+    void element.offsetWidth;
+
+    topPanel.style.animation = "";
+    bottomPanel.style.animation = "";
+    element.style.setProperty("--duration", `${duration}ms`);
+    element.classList.add("flip");
+
+    setTimeout(() => {
+        element.classList.remove("flip");
+        topStatic.textContent = newValue;
+        bottomStatic.textContent = newValue;
+        topPanel.querySelector("span").textContent = newValue;
+        bottomPanel.querySelector("span").textContent = newValue;
+    }, duration + 80);
+}
+
+function render(seconds, speed) {
+    const values = getDigits(seconds);
+    const duration = Math.max(70, Math.min(260, 180 / Math.max(.2, speed)));
+    let changed = false;
+
+    digits.forEach((element, index) => {
+        const oldValue = element.dataset.value;
+        const newValue = values[index];
+
+        if (oldValue === newValue) return;
+
+        changed = true;
+        flipDigit(element, oldValue, newValue, duration);
+        element.dataset.value = newValue;
+    });
+
+    if (changed) {
+        tick(Math.min(1, .3 + speed * .06));
+        separators.forEach(separator => {
+            separator.classList.remove("flash");
+            void separator.offsetWidth;
+            separator.classList.add("flash");
+        });
+    }
+}
+
+function autoStartClock() {
+    if (running) return;
+
+    targetDate = getTargetDate();
+    if (DEBUG) debugStart = performance.now();
+
+    const remaining = getRemaining();
+
+    if (remaining <= 0) {
+        finish();
+        return;
+    }
+
+    // SI YA SE VIO EL VIDEO ANTES -> MODO DIRECTO FINAL
+    if (HAS_SEEN_VIDEO) {
+        state = "REAL";
+        running = true;
+        virtualTime = remaining;
+        lastFrame = performance.now();
+        lastSecond = Math.floor(remaining);
+
+        status.textContent = "TIEMPO REAL • 1×";
+        clockScene.classList.add("final-center");
+        
+        randomizeGifs();
+        gifCanvas.classList.add("visible");
+
+        raf = requestAnimationFrame(loop);
+        return;
+    }
+
+    // SI ES LA PRIMERA VEZ -> EXPERIENCIA COMPLETA
+    state = "ANIMATING";
+    animStartTime = performance.now();
+    virtualTime = START_TIME;
+    running = true;
+
+    lastFrame = performance.now();
+    lastSecond = Math.floor(virtualTime);
+
+    status.textContent = "SINCRONIZANDO...";
+
+    raf = requestAnimationFrame(loop);
+}
+
+function loop(timestamp) {
+    if (!running) return;
+
+    lastFrame = timestamp;
+    const remaining = getRemaining();
+
+    if (remaining <= 0) {
+        finish();
+        return;
+    }
+
+    if (state === "ANIMATING") {
+        const elapsed = (timestamp - animStartTime) / 1000;
+        const progress = Math.min(1, elapsed / INTRO_DURATION);
+
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const distance = START_TIME - remaining;
+
+        virtualTime = START_TIME - (distance * easeOut);
+
+        const speed = Math.max(1, (distance / INTRO_DURATION / 1000) * (1 - progress));
+        render(virtualTime, speed);
+
+        if (progress >= 1) {
+            state = "REAL";
+            status.textContent = "TIEMPO REAL • 1×";
+            virtualTime = remaining;
+            lastSecond = Math.floor(remaining);
+
+            if (!minimizeTimeout) {
+                minimizeTimeout = setTimeout(() => {
+                    clockScene.classList.add("minimized");
+                    
+                    setTimeout(() => {
+                        playTextSequence(TEXT_MESSAGES_1, () => {
+                            showVideoPrompt();
+                        });
+                    }, 1200);
+                }, 3000);
+            }
+        }
+    }
+
+    if (state === "REAL") {
+        virtualTime = remaining;
+        const currentSecond = Math.floor(remaining);
+
+        if (currentSecond !== lastSecond) {
+            lastSecond = currentSecond;
+            render(virtualTime, 1);
+        }
+    }
+
+    raf = requestAnimationFrame(loop);
+}
+
+/* =========================================================
+   4. MANEJO DE SECUENCIAS DE TEXTOS Y VIDEO
+========================================================= */
+function playTextSequence(messages, onComplete) {
+    let index = 0;
+
+    function nextMessage() {
+        if (index >= messages.length) {
+            sequenceTextEl.style.display = "none";
+            if (onComplete) onComplete();
+            return;
+        }
+
+        const currentMsg = messages[index];
+        sequenceTextEl.textContent = currentMsg.text;
+        sequenceTextEl.classList.add("visible");
+
+        setTimeout(() => {
+            sequenceTextEl.classList.remove("visible");
+
+            setTimeout(() => {
+                index++;
+                nextMessage();
+            }, 800);
+        }, currentMsg.duration);
+    }
+
+    nextMessage();
+}
+
+function showVideoPrompt() {
+    videoPromptContainer.classList.add("visible");
+}
+
+startVideoBtn.addEventListener("click", () => {
+    videoPromptContainer.classList.remove("visible");
+    setTimeout(() => {
+        videoPromptContainer.style.display = "none";
+        showCentralVideo();
+    }, 600);
+});
+
+function showCentralVideo() {
+    videoWrapper.classList.add("show");
+    video.addEventListener("ended", onVideoEnded);
+
+    video.play().catch(err => {
+        console.log("Error al reproducir el video local:", err);
+    });
+}
+
+function onVideoEnded() {
+    // Guardar cookie válida por 365 días
+    setCookie("video_visto", "true", 365);
+
+    videoWrapper.classList.remove("show");
+    videoWrapper.classList.add("hide");
+
+    setTimeout(() => {
+        // Mostrar la segunda tanda de textos cinemáticos post-video
+        sequenceTextEl.style.display = "block";
+        playTextSequence(TEXT_MESSAGES_2, () => {
+            // Al finalizar la segunda tanda, mostrar la pantalla final definitiva
+            clockScene.classList.remove("minimized");
+            clockScene.classList.add("final-center");
+
+            randomizeGifs();
+            gifCanvas.classList.add("visible");
+        });
+    }, 800);
+}
+
+/* =========================================================
+   5. POSICIONAMIENTO ALEATORIO DE GIFS CADA VEZ
+========================================================= */
+function randomizeGifs() {
+    const gifItems = document.querySelectorAll('.gif-item');
+    if (gifItems.length === 0) return;
+
+    const zones = [
+        { top: [5, 20], left: [5, 25] },
+        { top: [5, 20], left: [70, 88] },
+        { top: [70, 85], left: [5, 25] },
+        { top: [70, 85], left: [70, 88] },
+        { top: [40, 55], left: [4, 18] },
+        { top: [40, 55], left: [78, 90] }
+    ];
+
+    gifItems.forEach((gif, index) => {
+        const zone = zones[index % zones.length];
+        
+        const randomTop = Math.floor(Math.random() * (zone.top[1] - zone.top[0] + 1)) + zone.top[0];
+        const randomLeft = Math.floor(Math.random() * (zone.left[1] - zone.left[0] + 1)) + zone.left[0];
+        const randomDelay = (Math.random() * 2).toFixed(1);
+
+        gif.style.top = `${randomTop}%`;
+        gif.style.left = `${randomLeft}%`;
+        gif.style.animationDelay = `${randomDelay}s`;
+    });
+}
+
+function finish() {
+    if (state === "FINISHED") return;
+
+    running = false;
+    state = "FINISHED";
+    cancelAnimationFrame(raf);
+
+    if (minimizeTimeout) clearTimeout(minimizeTimeout);
+
+    virtualTime = 0;
+    render(0, 1);
+    status.textContent = "00:00:00";
+
+    finalTick();
+    clockScene.classList.add("final-pulse");
+}
+
+/* =========================================================
+   6. INTERACCIÓN DE INICIO
+========================================================= */
+const startOverlay = document.getElementById('startOverlay');
+
+function launchExperience() {
+    initAudioContext();
+    startOverlay.classList.add('hidden');
+    autoStartClock();
+}
+
+startOverlay.addEventListener('click', launchExperience);
+startOverlay.addEventListener('touchstart', launchExperience);
+</script>
 
 </body>
-                          </html>
+</html>
+
+

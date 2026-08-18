@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuenta Regresiva Adaptativa</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div id="scene">
+
+    <!-- OVERLAY DE INICIO -->
+    <div id="startOverlay">
+        <div class="start-prompt">[ TOCA / HAZ CLIC PARA INICIAR ]</div>
+    </div>
+
+    <!-- ESCENA DEL RELOJ, TEXTOS Y VIDEO CENTRAL -->
+    <section id="clockScene">
+
+        <div class="clock-container">
+
+            <!-- TÍTULO SUPERIOR PARA FINAL -->
+            <div class="top-title">FALTAN</div>
+
+            <div class="clock">
+
+                <!-- HORAS -->
+                <div class="time-group">
+
+                    <div class="flip-digit" data-value="2">
+                        <div class="half top-static"><span>2</span></div>
+                        <div class="half bottom-static"><span>2</span></div>
+                        <div class="flip-panel top"><span>2</span></div>
+                        <div class="flip-panel bottom"><span>2</span></div>
+                    </div>
+
+                    <div class="flip-digit" data-value="4">
+                        <div class="half top-static"><span>4</span></div>
+                        <div class="half bottom-static"><span>4</span></div>
+                        <div class="flip-panel top"><span>4</span></div>
+                        <div class="flip-panel bottom"><span>4</span></div>
+                    </div>
+
+                </div>
+
+                <div class="separator">:</div>
+
+                <!-- MINUTOS -->
+                <div class="time-group">
+
+                    <div class="flip-digit" data-value="0">
+                        <div class="half top-static"><span>0</span></div>
+                        <div class="half bottom-static"><span>0</span></div>
+                        <div class="flip-panel top"><span>0</span></div>
+                        <div class="flip-panel bottom"><span>0</span></div>
+                    </div>
+
+                    <div class="flip-digit" data-value="0">
+                        <div class="half top-static"><span>0</span></div>
+                        <div class="half bottom-static"><span>0</span></div>
+                        <div class="flip-panel top"><span>0</span></div>
+                        <div class="flip-panel bottom"><span>0</span></div>
+                    </div>
+
+                </div>
+
+                <div class="separator">:</div>
+
+                <!-- SEGUNDOS -->
+                <div class="time-group">
+
+                    <div class="flip-digit" data-value="0">
+                        <div class="half top-static"><span>0</span></div>
+                        <div class="half bottom-static"><span>0</span></div>
+                        <div class="flip-panel top"><span>0</span></div>
+                        <div class="flip-panel bottom"><span>0</span></div>
+                    </div>
+
+                    <div class="flip-digit" data-value="0">
+                        <div class="half top-static"><span>0</span></div>
+                        <div class="half bottom-static"><span>0</span></div>
+                        <div class="flip-panel top"><span>0</span></div>
+                        <div class="flip-panel bottom"><span>0</span></div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div id="status">SINCRONIZANDO...</div>
+
+            <!-- TÍTULO INFERIOR PARA FINAL -->
+            <div class="bottom-title">PARA TU CUMPLE</div>
+
+        </div>
+
+        <!-- CONTENEDOR CENTRAL -->
+        <div id="contentContainer">
+
+            <div id="sequenceText" class="sequence-text"></div>
+
+            <!-- MENSAJE Y BOTÓN PREVIO AL VIDEO -->
+            <div id="videoPromptContainer">
+
+                <div class="prompt-text">
+                    es un video, usa audifonos o lo q se te antoje alv
+                </div>
+
+                <button id="startVideoBtn" class="play-button">
+                    VER VIDEO ▶
+                </button>
+
+            </div>
+
+            <!-- VIDEO -->
+            <div id="videoWrapper">
+
+                <video
+                    id="video"
+                    src="http://192.168.1.78:8080/share/vi.webm"
+                    controls
+                    playsinline
+                    preload="auto">
+                </video>
+
+            </div>
+
+        </div>
+
+        <!-- GIFS / STICKERS -->
+        <div id="gifCanvas">
+
+            <!-- Ejemplo:
+            <img src="tu_gif_1.gif" class="gif-item" alt="gif">
+            <img src="tu_gif_2.gif" class="gif-item" alt="gif">
+            -->
+
+        </div>
+
+    </section>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+                          </html>

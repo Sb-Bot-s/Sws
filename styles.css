@@ -1,0 +1,564 @@
+/* =========================================================
+   RESET Y ESTILOS GLOBALES
+========================================================= */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    user-select: none;
+}
+
+#scene {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+}
+
+/* =========================================================
+   OVERLAY DE INICIO
+========================================================= */
+
+#startOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    cursor: pointer;
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+
+#startOverlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.start-prompt {
+    font-family: 'Courier New', monospace;
+    font-size: clamp(0.9rem, 2vw, 1.3rem);
+    letter-spacing: 0.4em;
+    color: #00a2ff;
+    text-shadow:
+        0 0 15px rgba(0, 162, 255, 0.8),
+        0 0 30px rgba(0, 162, 255, 0.4);
+    animation: pulsePrompt 1.8s infinite ease-in-out;
+}
+
+@keyframes pulsePrompt {
+    0%,
+    100% {
+        opacity: 0.3;
+        transform: scale(0.98);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.02);
+    }
+}
+
+/* =========================================================
+   ESCENA DEL RELOJ Y MENSAJES
+========================================================= */
+
+#clockScene {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(
+        circle at 50% 40%,
+        #0a1836 0%,
+        #030a1a 50%,
+        #010308 100%
+    );
+    opacity: 1;
+}
+
+.clock-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    transform: translateY(0) scale(1);
+    transition: transform 1.6s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+    z-index: 30;
+}
+
+#clockScene.minimized .clock-container {
+    transform: translateY(calc(-40vh + 40px)) scale(0.55);
+}
+
+#clockScene.final-center .clock-container {
+    transform: translateY(0) scale(1.08);
+}
+
+/* =========================================================
+   TEXTOS
+========================================================= */
+
+.top-title,
+.bottom-title {
+    font-family: 'Courier New', monospace;
+    color: #00a2ff;
+    text-shadow:
+        0 0 15px rgba(0, 162, 255, 0.8),
+        0 0 30px rgba(0, 162, 255, 0.4);
+    opacity: 0;
+    transform: translateY(10px);
+    transition:
+        opacity 1.2s ease,
+        transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.top-title {
+    font-size: clamp(1.2rem, 3.5vw, 2.2rem);
+    letter-spacing: 0.5em;
+    font-weight: 700;
+}
+
+.bottom-title {
+    font-size: clamp(1rem, 3vw, 1.8rem);
+    letter-spacing: 0.3em;
+}
+
+#clockScene.final-center .top-title,
+#clockScene.final-center .bottom-title {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* =========================================================
+   RELOJ
+========================================================= */
+
+.clock {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(6px, 1.8vw, 24px);
+    font-family: 'Courier New', monospace;
+    font-size: clamp(3rem, 13vw, 9.5rem);
+    font-weight: 700;
+    line-height: 1;
+}
+
+.time-group {
+    display: flex;
+    gap: clamp(3px, .4vw, 8px);
+}
+
+.flip-digit {
+    position: relative;
+    width: .62em;
+    height: 1em;
+    perspective: 1000px;
+}
+
+.half {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    overflow: hidden;
+    background: linear-gradient(
+        180deg,
+        #0f2242 0%,
+        #061021 100%
+    );
+    border: 1px solid rgba(0, 162, 255, 0.35);
+    box-shadow:
+        inset 0 0 10px rgba(0, 162, 255, 0.15),
+        0 0 15px rgba(0, 0, 0, 0.8);
+    z-index: 1;
+}
+
+.half span {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1em;
+    display: block;
+    text-align: center;
+    line-height: 1em;
+    color: #e6f4ff;
+    text-shadow: 0 0 12px rgba(0, 162, 255, 0.6);
+}
+
+.top-static {
+    top: 0;
+    border-radius: 6px 6px 2px 2px;
+}
+
+.top-static span {
+    top: 0;
+}
+
+.bottom-static {
+    bottom: 0;
+    border-radius: 2px 2px 6px 6px;
+}
+
+.bottom-static span {
+    top: -100%;
+}
+
+.flip-digit::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 2px;
+    transform: translateY(-1px);
+    background: #00a2ff;
+    box-shadow:
+        0 0 8px #00a2ff,
+        0 0 15px #00a2ff;
+    z-index: 20;
+}
+
+.flip-panel {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    overflow: hidden;
+    z-index: 10;
+    background: linear-gradient(
+        180deg,
+        #12284d 0%,
+        #071328 100%
+    );
+    border: 1px solid rgba(0, 162, 255, 0.5);
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
+}
+
+.flip-panel span {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1em;
+    display: block;
+    text-align: center;
+    line-height: 1em;
+    color: #e6f4ff;
+    text-shadow: 0 0 12px rgba(0, 162, 255, 0.6);
+}
+
+.flip-panel.top {
+    top: 0;
+    transform-origin: bottom center;
+    border-radius: 6px 6px 2px 2px;
+    transform: rotateX(0deg);
+}
+
+.flip-panel.top span {
+    top: 0;
+}
+
+.flip-panel.bottom {
+    bottom: 0;
+    transform-origin: top center;
+    border-radius: 2px 2px 6px 6px;
+    transform: rotateX(90deg);
+}
+
+.flip-panel.bottom span {
+    top: -100%;
+}
+
+.flip-digit.flip .flip-panel.top {
+    animation: flipTop var(--duration) cubic-bezier(.37,.01,.63,1) forwards;
+}
+
+@keyframes flipTop {
+    0% {
+        transform: rotateX(0deg);
+    }
+
+    100% {
+        transform: rotateX(-90deg);
+    }
+}
+
+.flip-digit.flip .flip-panel.bottom {
+    animation:
+        flipBottom
+        var(--duration)
+        cubic-bezier(.37,.01,.63,1)
+        forwards;
+
+    animation-delay: calc(var(--duration) * .45);
+}
+
+@keyframes flipBottom {
+    0% {
+        transform: rotateX(90deg);
+    }
+
+    100% {
+        transform: rotateX(0deg);
+    }
+}
+
+.separator {
+    color: #00a2ff;
+    opacity: 0.8;
+    text-shadow:
+        0 0 10px #00a2ff,
+        0 0 20px rgba(0, 162, 255, 0.5);
+    transition:
+        opacity .1s ease,
+        transform .1s ease;
+}
+
+.separator.flash {
+    opacity: 1;
+    transform: scale(1.1);
+    color: #ffffff;
+    text-shadow:
+        0 0 15px #ffffff,
+        0 0 25px #00a2ff;
+}
+
+#status {
+    min-height: 1em;
+    font-family: 'Courier New', monospace;
+    font-size: clamp(.6rem, 1.4vw, .85rem);
+    letter-spacing: .4em;
+    color: #33ffaa;
+    text-shadow: 0 0 10px rgba(51, 255, 170, 0.6);
+    opacity: 0.85;
+    text-align: center;
+}
+
+/* =========================================================
+   CONTENEDOR CENTRAL
+========================================================= */
+
+#contentContainer {
+    position: absolute;
+    top: 52%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 800px;
+    text-align: center;
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.sequence-text {
+    font-family: 'Courier New', monospace;
+    font-size: clamp(1.1rem, 3.2vw, 2.2rem);
+    letter-spacing: 0.15em;
+    color: #ffffff;
+    text-shadow:
+        0 0 12px rgba(0, 162, 255, 0.7),
+        0 0 25px rgba(0, 162, 255, 0.4);
+    opacity: 0;
+    transform: translateY(15px) scale(0.96);
+    transition:
+        opacity 0.8s ease,
+        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sequence-text.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* =========================================================
+   VIDEO PROMPT
+========================================================= */
+
+#videoPromptContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    opacity: 0;
+    transform: scale(0.95);
+    transition:
+        opacity 0.8s ease,
+        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+}
+
+#videoPromptContainer.visible {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+.prompt-text {
+    font-family: 'Courier New', monospace;
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
+    letter-spacing: 0.12em;
+    color: #00a2ff;
+    text-shadow: 0 0 12px rgba(0, 162, 255, 0.7);
+    line-height: 1.4;
+    max-width: 500px;
+}
+
+.play-button {
+    padding: 12px 32px;
+    background: transparent;
+    border: 1px solid #00a2ff;
+    color: #ffffff;
+    font-family: 'Courier New', monospace;
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    letter-spacing: 0.2em;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(0, 162, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.play-button:hover {
+    background: rgba(0, 162, 255, 0.2);
+    box-shadow: 0 0 25px rgba(0, 162, 255, 0.6);
+    transform: scale(1.05);
+}
+
+/* =========================================================
+   VIDEO
+========================================================= */
+
+#videoWrapper {
+    height: min(60vh, 450px);
+    aspect-ratio: 9 / 16;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 162, 255, 0.4);
+    box-shadow:
+        0 0 30px rgba(0, 162, 255, 0.3),
+        0 10px 40px rgba(0, 0, 0, 0.9);
+    opacity: 0;
+    transform: scale(0.92);
+    transition:
+        opacity 1.2s ease,
+        transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    display: none;
+}
+
+#videoWrapper.show {
+    display: block;
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+#videoWrapper.hide {
+    opacity: 0;
+    transform: scale(0.85);
+    pointer-events: none;
+}
+
+#video {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+/* =========================================================
+   GIFS / STICKERS
+========================================================= */
+
+#gifCanvas {
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+}
+
+#gifCanvas.visible {
+    opacity: 1;
+}
+
+.gif-item {
+    position: absolute;
+    max-width: clamp(70px, 14vw, 140px);
+    max-height: clamp(70px, 14vw, 140px);
+    object-fit: contain;
+    animation: floatGif 3s infinite ease-in-out alternate;
+}
+
+@keyframes floatGif {
+    0% {
+        transform: translateY(0px) rotate(-4deg);
+    }
+
+    100% {
+        transform: translateY(-12px) rotate(4deg);
+    }
+}
+
+.final-pulse {
+    animation: finalPulse .6s ease;
+}
+
+@keyframes finalPulse {
+    0% {
+        transform: scale(1);
+    }
+
+    40% {
+        transform: scale(1.06);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:600px) {
+
+    .clock {
+        font-size: clamp(2.2rem, 14vw, 5.5rem);
+        gap: 4px;
+    }
+
+    .time-group {
+        gap: 2px;
+    }
+
+    #clockScene.minimized .clock-container {
+        transform: translateY(calc(-38vh + 20px)) scale(0.65);
+    }
+      }
